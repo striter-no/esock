@@ -78,7 +78,7 @@ ssize_t tcp_ssend(enet_fd server, im_fd *fd){
     return mfd_redirect(&dest, &src);
 }
 
-int tcp_connect(eaddr_t address, enet_fd *fd){
+int tcp_connect(enet_fd *fd){
     return connect(fd->rfd, (struct sockaddr*)&fd->addr, fd->addr_len);
 }
 
