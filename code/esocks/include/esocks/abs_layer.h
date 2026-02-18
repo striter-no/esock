@@ -37,7 +37,7 @@ typedef struct {
     int  (*sock_create)(enet_fd *fd, eaddr_t address);
 
     int  (*ssock_bind)(enet_fd *fd);
-    int  (*ssock_newcli)(enet_fd server, enet_fd *newcli);
+    int  (*ssock_newcli)(enet_fd server, enet_fd *newcli, im_fd *rx_buf);
     ssize_t (*ssock_recv)(enet_fd server, im_fd *fd);
     ssize_t (*ssock_send)(enet_fd server, im_fd *fd);
 
@@ -67,7 +67,7 @@ typedef struct {
     int     (*create)(enet_fd *fd, eaddr_t address);
     
     int     (*s_bind)(enet_fd *fd);
-    int     (*s_newcli)(enet_fd server, enet_fd *newcli);
+    int     (*s_newcli)(enet_fd server, enet_fd *newcli, im_fd *rx_buf);
     ssize_t (*s_recv)(enet_fd server, im_fd *fd);
     ssize_t (*s_send)(enet_fd server, im_fd *fd);
 
@@ -99,6 +99,14 @@ enet_fd *make_enfd_copy(enet_fd fd){
 esock_abs_pdest *make_dest_copy(esock_abs_dest *dest){
     esock_abs_pdest *cp = malloc(sizeof(*dest));
     memcpy(cp, dest, sizeof(*dest));
+    return cp;
+}
+
+esock_abs_pdest *make_dest_copy2(enet_fd nfd, im_fd *rx, im_fd *tx){
+    esock_abs_pdest *cp = malloc(sizeof(esock_abs_pdest));
+    cp->nfd = nfd;
+    cp->rx_fd = rx;
+    cp->tx_fd = tx;
     return cp;
 }
 
@@ -156,16 +164,33 @@ void *__esock_abs_worker(void *_args) {
         
         if (fds[0].revents & POLLIN) {
             if (abs->type == ESOCK_SERVER) {
-                enet_fd new_cli;
-                if (abs->ssock_newcli && abs->ssock_newcli(abs->nfd, &new_cli) == 0) {
+                enet_fd new_cli_nfd;
+                im_fd *rx = make_dyn_imfd();
+                im_fd *tx = make_dyn_imfd();
+                if (abs->ssock_newcli && abs->ssock_newcli(abs->nfd, &new_cli_nfd, rx) == 0) {
                     esock_abs_reqconn(
                         abs, 
                         (esock_abs_dest){ 
-                            .nfd = new_cli, 
-                            .tx_fd = make_dyn_imfd(), 
-                            .rx_fd = make_dyn_imfd() 
+                            .nfd = new_cli_nfd, 
+                            .tx_fd = tx, 
+                            .rx_fd = rx 
                         }
                     );
+
+                    if (rx->used > 0) {
+                        r_fd tmp_rfd = {new_cli_nfd.rfd, true, true};
+                        t_fd tfd; mfd_tfd(&tmp_rfd, RAW_FD, &tfd);
+                        
+                        esock_ev ev = { 
+                            .type = EV_POLLIN, 
+                            .fd = tfd, 
+                            .data_ptr = make_dest_copy2(new_cli_nfd, rx, tx) 
+                        };
+                        esock_ev_push(abs->evsys, ev);
+                    }
+                } else {
+                    free(rx);
+                    free(tx);
                 }
             } else {
                 if (abs->csock_send) 

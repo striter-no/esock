@@ -39,7 +39,9 @@ int tcp_bind(enet_fd *fd){
     return listen(fd->rfd, ESOCKS_TCP_MAX_CLIENTS);
 }
 
-int tcp_newcli(enet_fd server, enet_fd *newcli){
+int tcp_newcli(enet_fd server, enet_fd *newcli, im_fd *rx_buf){
+    (void)rx_buf;
+    
     struct sockaddr_storage client_addr;
     socklen_t addr_len = sizeof(client_addr);
 
