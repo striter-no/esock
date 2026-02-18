@@ -113,9 +113,9 @@ int eaddr_resolve_domain(const char *domain, eaddr_t *output){
 
 // NOTICE: fd IS NOT set (== -1), only address
 int eaddr_netfd(eaddr_t addr, enet_fd *out){
-    memset(out, 0, sizeof(*out));
+    // memset(out, 0, sizeof(*out));
     
-    out->rfd = -1;
+    // out->rfd = -1;
     switch (addr.t){
         case EADDR_IPV4:{
             struct sockaddr_in *ipv4 = (struct sockaddr_in *)&out->addr;

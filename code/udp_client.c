@@ -21,7 +21,7 @@ int main(void){
 
     esock_abs abs;
     esock_abs_init(&abs, &evsys, ESOCK_CLIENT);
-    esock_abs_set_opts(&abs, UDP_OPT, eaddr_make4(eipv4("127.0.0.1", 9000)));
+    esock_abs_set_opts(&abs, UDP_OPT, eaddr_make6(eipv6("2a00:1370:817e:d7:1780:4889:1f66:ed6f", 9000)));
     
     if (0 > esock_abs_connect(&abs)) {
         perror("connect failed");
