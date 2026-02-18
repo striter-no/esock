@@ -50,7 +50,7 @@ static void handle_events(esock_abs *abs, esock_ev *ev){
             printf("connected: %s:%u\n", addr.ip.v4.ip, addr.ip.v4.port);
         } break;
         case EV_DISCONNECT:{
-            printf("disconnected: %s:%u\n---\n", addr.ip.v4.ip, addr.ip.v4.port);
+            printf("disconnected: %s:%u\n", addr.ip.v4.ip, addr.ip.v4.port);
         } break;
         case EV_POLLIN:{
             uint8_t buf[1024];
